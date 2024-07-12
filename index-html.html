@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BCNA: Breast Care Navigator Assistant</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #10b981;
+            --background-color: #f3f4f6;
+            --text-color: #1f2937;
+            --message-bg-patient: #e0e7ff;
+            --message-bg-assistant: #f0fdf4;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            width: 95%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+        .chat-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--secondary-color);
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        .assistant {
+            background-color: var(--message-bg-assistant);
+            align-self: flex-start;
+        }
+        .patient {
+            background-color: var(--message-bg-patient);
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .chat-input {
+            display: flex;
+            padding: 20px;
+            background-color: white;
+            border-top: 1px solid #e5e7eb;
+        }
+        #message-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        #send-button {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>Breast Care Navigator Assistant</h1>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>BCNA Active</span>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input">
+            <input type="text" id="message-input" placeholder="Type your question or concern...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        function addMessage(sender, message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender.toLowerCase());
+            messageElement.textContent = message;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                addMessage('Patient', message);
+                messageInput.value = '';
+                
+                fetch('/send_message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    addMessage('Assistant', data.response);
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    addMessage('Assistant', 'Sorry, there was an error processing your request.');
+                });
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Add a welcome message
+        addMessage('Assistant', 'Welcome to the Breast Care Navigator Assistant. I\'m an AI here to provide information and guidance about breast cancer care. Please feel free to ask any questions about diagnosis, treatment options, or the care process. I\'ll help connect you with the right level of care based on your needs.');
+    </script>
+</body>
+</html>
